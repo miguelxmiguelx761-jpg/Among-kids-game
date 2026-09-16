@@ -1,0 +1,6 @@
+{
+  "name": "Among Kids",
+  "description": "Multiplayer social deduction and mystery game for mobile and practice arena with 12 unique roles, quick chat, interactive tasks, and dynamic audio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
