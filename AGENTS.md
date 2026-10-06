@@ -36,8 +36,9 @@ matching id to the `SCREENS` list in `index.html`.
   line in `.env.example` (read by the `secrets` Gradle plugin) and no source file
   references it or `BuildConfig`; `firebase-ai` is a declared but unused dependency.
   `googleServices.missing.passthrough=true` means no `google-services.json` is needed.
-- Ignore the KSP stack trace about `ApplicationManager.getApplication()` returning
-  null — harmless KSP/AWT noise in a container (`JAVA_TOOL_OPTIONS` sets headless).
+- KSP is pinned to **2.3.6** on purpose: 2.3.5 printed a spurious
+  `ApplicationManager.getApplication()` null stack trace on the AWT thread
+  (google/ksp#2763, fixed in 2.3.6). Do not pin it back down to 2.3.5.
 - Robolectric downloads its `android-all` jar for API 36 on the first test run, and the
   Gradle cache lives in the `gradle-home` volume; do not `down -v` it needlessly.
 - The Android SDK/Gradle live in the image (`android-toolchain.Dockerfile`); only the
