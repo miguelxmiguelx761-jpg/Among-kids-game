@@ -1,0 +1,58 @@
+# Base44 development environment for the "Among Kids" Android app.
+#
+#   android  - toolchain image with the repo bind-mounted at /workspace. Builds the
+#              app and renders its real Compose screens to PNGs (shared volume),
+#              then re-renders whenever a source file changes.
+#   preview  - nginx serving the rendered screens as a browsable gallery on :3000.
+#
+# The app itself cannot be served to a browser (it is a native Android app and this
+# sandbox has no KVM for an emulator), so the preview is the app's real UI rendered
+# headlessly from the current source.
+name: among-kids
+
+services:
+  android:
+    build:
+      context: .
+      dockerfile: .base44/android-toolchain.Dockerfile
+    working_dir: /workspace
+    command: ["sh", "/workspace/.base44/preview/run.sh"]
+    volumes:
+      - .:/workspace
+      - gradle-home:/root/.gradle
+      - preview-out:/preview-out
+    environment:
+      - PREVIEW_OUT_DIR=/preview-out
+      - GRADLE_USER_HOME=/root/.gradle
+      - ANDROID_HOME=/opt/android-sdk
+      - ANDROID_SDK_ROOT=/opt/android-sdk
+      # Containers have no display; keeps KSP/AWT from trying to initialise one.
+      - JAVA_TOOL_OPTIONS=-Djava.awt.headless=true
+    restart: on-failure
+    stop_grace_period: 5s
+    healthcheck:
+      # A successful build + render leaves the APK and the .ready stamp behind.
+      test: ["CMD-SHELL", "test -f /preview-out/.ready && test -f /workspace/app/build/outputs/apk/debug/app-debug.apk"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30m
+
+  preview:
+    image: nginx:alpine
+    ports:
+      - "3000:80"
+    volumes:
+      - ./.base44/preview/index.html:/usr/share/nginx/html/index.html:ro
+      - preview-out:/usr/share/nginx/html/screens:ro
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ | grep -qi 'Among Kids'"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  gradle-home:
+  preview-out:
